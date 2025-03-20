@@ -23,8 +23,8 @@ const KanbanBoard = () => {
       .then((data) => {
         const formattedData = data.map(task => ({ 
           ...task, 
-          id: task.complaint_id,
-          order: task.order || Date.now() // Add temporary order if missing
+          id: task.complaint_id/* ,
+          order: task.order || Date.now() // Add temporary order if missing */
         }));
         setTasks(formattedData);
       })
@@ -75,8 +75,6 @@ const KanbanBoard = () => {
     .then(data => console.log("API Response:", data))
     .catch(error => console.error("Error calling API:", error));
   };
-  
-
   return (
     <div style={{ display: "flex" }}>
       <Sidebar />
