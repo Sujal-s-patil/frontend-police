@@ -1,4 +1,3 @@
-// TaskCard.js
 import React, { useState, useEffect } from "react";
 
 
@@ -12,7 +11,10 @@ const TaskModal = ({ task, onClose }) => {
     if (showAssignPopup) {
       fetch(`${process.env.REACT_APP_API_URL}/police/team`)
         .then((response) => response.json())
-        .then((data) => setPoliceTeam(data))
+        .then((data) => {
+          const availableOfficers = data.filter(officer => officer.occupied !== 1);
+          setPoliceTeam(availableOfficers);
+        })
         .catch((error) => console.error("Error fetching police team:", error));
     }
   }, [showAssignPopup]);
@@ -36,20 +38,25 @@ const TaskModal = ({ task, onClose }) => {
 
   const handleConfirmAssignment = () => {
     selectedOfficers.forEach((police_id) => {
-      fetch(`http://localhost:5555/police/team/${police_id}`, {
+      fetch(`${process.env.REACT_APP_API_URL}/police/assign`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ occupied: 1 }),
+        body: JSON.stringify({ 
+          police_id,          
+          complaint_id: task.complaint_id
+        }),
       })
         .then((response) => response.json())
-        .then((data) => console.log("Updated:", data))
-        .catch((error) => console.error("Error updating officer:", error));
+        .then((data) => console.log("Officer assigned:", data))
+        .catch((error) => console.error("Error assigning officer:", error));
     });
+  
     handleCloseAssignPopup();
   };
-
+  
+  
   if (!task) return null;
 
   return (
@@ -133,7 +140,7 @@ const TaskModal = ({ task, onClose }) => {
         </div>
 
         {showAssignPopup && (
-  <div 
+  <div
     style={{
       position: "fixed",
       top: 0,
@@ -148,7 +155,7 @@ const TaskModal = ({ task, onClose }) => {
     }}
     onClick={handleCloseAssignPopup} // Close popup on clicking background
   >
-    <div 
+    <div
       style={{
         backgroundColor: "white",
         padding: "20px",
@@ -156,7 +163,7 @@ const TaskModal = ({ task, onClose }) => {
         boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
         zIndex: 1101,
         maxWidth: "500px",
-        width: "90%"
+        width: "90%",
       }}
       onClick={(e) => e.stopPropagation()} // Prevent click inside from closing
     >
@@ -164,21 +171,31 @@ const TaskModal = ({ task, onClose }) => {
       {policeTeam.length > 0 ? (
         <div>
           {policeTeam.map((officer) => (
-            <div key={officer.police_id} style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px",
-              borderBottom: "1px solid #ddd"
-            }}>
+            <div
+              key={officer.police_id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px",
+                borderBottom: "1px solid #ddd",
+              }}
+            >
               <img
                 src={officer.photo || "placeholder.jpg"}
                 alt={officer.full_name}
-                style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  marginRight: "30px",
+                }}
               />
-              <div>
+              <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: "bold", margin: 0 }}>{officer.full_name}</p>
-                <p style={{ margin: 0, fontSize: "12px", color: "gray" }}>{officer.speciality}</p>
+                <p style={{ margin: 0, fontSize: "12px", color: "gray" }}>
+                  {officer.speciality}
+                </p>
               </div>
               <input
                 type="checkbox"
@@ -191,26 +208,41 @@ const TaskModal = ({ task, onClose }) => {
       ) : (
         <p>Loading officers...</p>
       )}
-      <button 
-      onClick={handleConfirmAssignment} 
-      style={{
-        padding: "8px 16px",
-        backgroundColor: "#34d399",
-        color: "#fff",
-        borderRadius: "4px",
-        border: "none",
-        cursor: "pointer"
-      }}>Confirm Assignment</button>
-      <button 
-      onClick={handleCloseAssignPopup} 
-      style={{
-        padding: "8px 16px",
-        backgroundColor: "#007bff",
-        color: "white",
-        borderRadius: "4px",
-        border: "none",
-        cursor: "pointer"
-      }}>Close</button>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "8px",
+          marginTop: "16px",
+        }}
+      >
+        <button
+          onClick={handleConfirmAssignment}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#34d399",
+            color: "#fff",
+            borderRadius: "4px",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Confirm Assignment
+        </button>
+        <button
+          onClick={handleCloseAssignPopup}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#007bff",
+            color: "white",
+            borderRadius: "4px",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Close
+        </button>
+      </div>
     </div>
   </div>
 )}
