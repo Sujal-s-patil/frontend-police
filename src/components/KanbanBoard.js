@@ -114,26 +114,42 @@ const Column = ({ status, tasks, onTaskDrop }) => {
   const columnRef = useRef(null);
   const [dragOverIndex, setDragOverIndex] = useState(-1);
 
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverIndex(-1); // Reset drag over index when leaving
+  };
+  
   const handleDragOver = (e) => {
+    // Only handle drags containing our task data type
+    if (!e.dataTransfer.types.includes('application/json')) {
+      return;
+    }
+    
     e.preventDefault();
     const rect = columnRef.current.getBoundingClientRect();
     const y = e.clientY - rect.top;
-    const hoverIndex = Math.min(tasks.length - 1, Math.floor(y / 60)); // 60px per task
+    const hoverIndex = Math.min(tasks.length - 1, Math.floor(y / 60));
     setDragOverIndex(hoverIndex);
   };
 
-  const handleDragLeave = () => {
-    setDragOverIndex(-1);
-  };
-
   const handleDrop = (e) => {
-    e.preventDefault();
-    const taskData = JSON.parse(e.dataTransfer.getData("application/json"));
-    const rect = columnRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const dropIndex = Math.min(tasks.length, Math.floor(y / 60));
+    // Only handle drops with our task data type
+    if (!e.dataTransfer.types.includes('application/json')) {
+      return;
+    }
 
-    onTaskDrop(taskData.id, status, dropIndex);
+    e.preventDefault();
+    try {
+      const taskData = JSON.parse(e.dataTransfer.getData("application/json"));
+      const rect = columnRef.current.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const dropIndex = Math.min(tasks.length, Math.floor(y / 60));
+
+      onTaskDrop(taskData.id, status, dropIndex);
+    } catch (error) {
+      console.error("Drop error:", error);
+    }
     setDragOverIndex(-1);
   };
 
