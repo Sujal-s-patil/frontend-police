@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-
-
 const TaskModal = ({ task, onClose }) => {
   const [showAssignPopup, setShowAssignPopup] = useState(false);
   const [policeTeam, setPoliceTeam] = useState([]);
   const [selectedOfficers, setSelectedOfficers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (showAssignPopup) {
@@ -26,6 +25,7 @@ const TaskModal = ({ task, onClose }) => {
   const handleCloseAssignPopup = () => {
     setShowAssignPopup(false);
     setSelectedOfficers([]);
+    setSearchTerm("");
   };
 
   const handleOfficerSelect = (police_id) => {
@@ -43,8 +43,8 @@ const TaskModal = ({ task, onClose }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          police_id,          
+        body: JSON.stringify({
+          police_id,
           complaint_id: task.complaint_id
         }),
       })
@@ -52,11 +52,14 @@ const TaskModal = ({ task, onClose }) => {
         .then((data) => console.log("Officer assigned:", data))
         .catch((error) => console.error("Error assigning officer:", error));
     });
-  
+
     handleCloseAssignPopup();
   };
-  
-  
+
+  const filteredPoliceTeam = policeTeam.filter((officer) =>
+    officer.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (!task) return null;
 
   return (
@@ -136,123 +139,144 @@ const TaskModal = ({ task, onClose }) => {
           >
             Close
           </button>
-
         </div>
 
         {showAssignPopup && (
-  <div
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1100,
-      backgroundColor: "rgba(0,0,0,0.5)",
-    }}
-    onClick={handleCloseAssignPopup} // Close popup on clicking background
-  >
-    <div
-      style={{
-        backgroundColor: "white",
-        padding: "20px",
-        borderRadius: "10px",
-        boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-        zIndex: 1101,
-        maxWidth: "500px",
-        width: "90%",
-      }}
-      onClick={(e) => e.stopPropagation()} // Prevent click inside from closing
-    >
-      <h3>Assign Task</h3>
-      {policeTeam.length > 0 ? (
-        <div>
-          {policeTeam.map((officer) => (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1100,
+              backgroundColor: "rgba(0,0,0,0.5)",
+            }}
+            onClick={handleCloseAssignPopup}
+          >
             <div
-              key={officer.police_id}
               style={{
+                backgroundColor: "white",
+                padding: "20px",
+                borderRadius: "10px",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                zIndex: 1101,
+                maxWidth: "500px",
+                width: "90%",
+                maxHeight: "80vh",
+                overflow: "hidden",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px",
-                borderBottom: "1px solid #ddd",
+                flexDirection: "column",
               }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={officer.photo || "placeholder.jpg"}
-                alt={officer.full_name}
+              <h3>Assign Task</h3>
+              <input
+                type="text"
+                placeholder="Search by name"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
-                  width: "50px",
-                  height: "50px",
-                  borderRadius: "50%",
-                  marginRight: "30px",
+                  padding: "8px",
+                  marginBottom: "12px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  width: "95%",
                 }}
               />
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: "bold", margin: 0 }}>{officer.full_name}</p>
-                <p style={{ margin: 0, fontSize: "12px", color: "gray" }}>
-                  {officer.speciality}
-                </p>
+              {policeTeam.length > 0 ? (
+                <div
+                  style={{
+                    overflowY: "auto",
+                    flex: 1,
+                    maxHeight: "300px",
+                    marginBottom: "16px",
+                    border: "1px solid #eee",
+                    borderRadius: "5px",
+                  }}
+                >
+                  {filteredPoliceTeam.map((officer) => (
+                    <div
+                      key={officer.police_id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px",
+                        borderBottom: "1px solid #ddd",
+                      }}
+                    >
+                      <img
+                        src={officer.photo || "placeholder.jpg"}
+                        alt={officer.full_name}
+                        style={{
+                          width: "50px",
+                          height: "50px",
+                          borderRadius: "50%",
+                          marginRight: "30px",
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: "bold", margin: 0 }}>{officer.full_name}</p>
+                        <p style={{ margin: 0, fontSize: "12px", color: "gray" }}>
+                          {officer.speciality}
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={selectedOfficers.includes(officer.police_id)}
+                        onChange={() => handleOfficerSelect(officer.police_id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>Loading officers...</p>
+              )}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "8px",
+                }}
+              >
+                <button
+                  onClick={handleConfirmAssignment}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#34d399",
+                    color: "#fff",
+                    borderRadius: "4px",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  Confirm Assignment
+                </button>
+                <button
+                  onClick={handleCloseAssignPopup}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#007bff",
+                    color: "white",
+                    borderRadius: "4px",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  Close
+                </button>
               </div>
-              <input
-                type="checkbox"
-                checked={selectedOfficers.includes(officer.police_id)}
-                onChange={() => handleOfficerSelect(officer.police_id)}
-              />
             </div>
-          ))}
-        </div>
-      ) : (
-        <p>Loading officers...</p>
-      )}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "8px",
-          marginTop: "16px",
-        }}
-      >
-        <button
-          onClick={handleConfirmAssignment}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#34d399",
-            color: "#fff",
-            borderRadius: "4px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Confirm Assignment
-        </button>
-        <button
-          onClick={handleCloseAssignPopup}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#007bff",
-            color: "white",
-            borderRadius: "4px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
-
 
 const TaskCard = ({ task, isDraggingOver }) => {
   const [showModal, setShowModal] = useState(false);
