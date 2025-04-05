@@ -57,7 +57,8 @@ const TaskModal = ({ task, onClose }) => {
   };
 
   const filteredPoliceTeam = policeTeam.filter((officer) =>
-    officer.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    officer.full_name.toLowerCase().includes(searchTerm.toLowerCase())  || 
+  officer.speciality.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (!task) return null;
@@ -176,7 +177,7 @@ const TaskModal = ({ task, onClose }) => {
               <h3>Assign Task</h3>
               <input
                 type="text"
-                placeholder="Search by name"
+                placeholder="Search by name or speciality"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
